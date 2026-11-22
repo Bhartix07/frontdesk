@@ -16,12 +16,14 @@ import {
   Eye,
   RotateCcw,
   Ticket,
-  Compass
+  Compass,
+  Train
 } from 'lucide-react';
 import { ticketApi, agentApi } from '../services/api';
 import SLAIndicator from '../components/SLAIndicator';
 import InternalNotes from '../components/InternalNotes';
 import ActivityTimeline from '../components/ActivityTimeline';
+import { TicketBarcode, OfficerAvatar } from '../components/TrainGraphics';
 
 export default function TicketDetails({ currentAgent, onOpenCustomerSimulator }) {
   const { id } = useParams();
@@ -144,7 +146,6 @@ export default function TicketDetails({ currentAgent, onOpenCustomerSimulator })
         content: replyContent.trim()
       });
 
-      // Optionally transition status if selected
       if (nextStatus && nextStatus !== ticket.status) {
         await ticketApi.updateStatus(
           ticket.id,
@@ -198,52 +199,56 @@ export default function TicketDetails({ currentAgent, onOpenCustomerSimulator })
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       
-      {/* Top Breadcrumb & Actions */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
+      {/* Top Boarding Pass Header with Barcode */}
+      <div className="bg-white p-5 rounded-2xl border-2 border-slate-200 shadow-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative overflow-hidden">
+        
+        {/* Left notch */}
+        <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="p-2.5 rounded-lg bg-slate-100 text-[#0b1e3b] hover:bg-slate-200 transition-colors"
+            className="p-2.5 rounded-xl bg-slate-100 text-[#0b1e3b] hover:bg-slate-200 transition-colors shadow-xs"
             title="Go Back"
           >
-            <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
+            <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono font-extrabold text-xs text-[#0b1e3b] bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded">
+              <span className="font-mono font-black text-xs text-[#07172f] bg-amber-100 border border-amber-300 px-3 py-0.5 rounded shadow-2xs">
                 PNR: {ticket.ticketNumber}
               </span>
               <span className="text-xs text-slate-400">•</span>
-              <span className="text-xs text-slate-500 font-mono">
+              <span className="text-xs text-slate-500 font-mono font-semibold">
                 Logged: {new Date(ticket.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
-            <h1 className="text-xl font-black text-slate-900 mt-1">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
               {ticket.title}
             </h1>
           </div>
         </div>
 
-        {/* Header Actions */}
-        <div className="flex items-center gap-2">
+        {/* Right Barcode & Passenger View CTA */}
+        <div className="flex items-center gap-4 border-t sm:border-t-0 sm:border-l sm:border-slate-200 sm:pl-5 pt-3 sm:pt-0">
+          <TicketBarcode number={ticket.ticketNumber} />
+          
           <button
             onClick={() => onOpenCustomerSimulator(ticket.ticketNumber)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-amber-500/50 bg-amber-50 text-amber-900 text-xs font-bold uppercase tracking-wider hover:bg-amber-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-amber-500/50 bg-amber-50 text-amber-900 text-xs font-black uppercase tracking-wider hover:bg-amber-100 transition-colors shadow-2xs whitespace-nowrap"
             title="Verify passenger view to ensure private notes never leak"
           >
             <Eye className="w-4 h-4 text-amber-700" />
-            Passenger View (Verify INC-0304)
+            Passenger View (INC-0304)
           </button>
         </div>
       </div>
 
       {/* Collision Conflict Warning - Addresses INC-0291 */}
       {conflictError && (
-        <div className="bg-rose-50 border-2 border-rose-400 rounded-xl p-4 flex items-start gap-3 text-rose-900 shadow-sm">
+        <div className="bg-rose-50 border-2 border-rose-400 rounded-xl p-4 flex items-start gap-3 text-rose-900 shadow-sm animate-pulse">
           <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
           <div>
             <h4 className="font-extrabold text-sm uppercase tracking-wide">Collision Protection Active (INC-0291)</h4>
-            <p className="text-xs text-rose-800 mt-0.5 font-medium">{conflictError}</p>
+            <p className="text-xs text-rose-800 mt-0.5 font-bold">{conflictError}</p>
           </div>
         </div>
       )}
@@ -263,23 +268,26 @@ export default function TicketDetails({ currentAgent, onOpenCustomerSimulator })
             {!ticket.assignedTo ? (
               <button
                 onClick={handleClaim}
-                className="w-full py-2 px-3 rounded bg-amber-500 hover:bg-amber-400 text-[#0b1e3b] font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors shadow-sm text-xs"
+                className="w-full py-2 px-3 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#07172f] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors shadow-sm text-xs"
               >
                 <UserPlus className="w-4 h-4 stroke-[2.5]" />
                 Claim This Ticket
               </button>
             ) : (
-              <select
-                value={ticket.assignedToId || ''}
-                onChange={(e) => handleReassign(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded p-2 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0b1e3b]"
-              >
-                {agents.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name} ({a.role})
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2 w-full">
+                <OfficerAvatar name={ticket.assignedTo.name} role={ticket.assignedTo.role} size="sm" />
+                <select
+                  value={ticket.assignedToId || ''}
+                  onChange={(e) => handleReassign(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0b1e3b]"
+                >
+                  {agents.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name} ({a.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
           </div>
         </div>
@@ -292,7 +300,7 @@ export default function TicketDetails({ currentAgent, onOpenCustomerSimulator })
           <select
             value={ticket.priority}
             onChange={(e) => handlePriorityChange(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded p-2 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0b1e3b]"
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0b1e3b]"
           >
             <option value="CRITICAL">Superfast / Critical (2h Reply / Same Day)</option>
             <option value="MEDIUM">Express / Medium (4.5h Reply / 3 Days)</option>
@@ -308,7 +316,7 @@ export default function TicketDetails({ currentAgent, onOpenCustomerSimulator })
           <select
             value={ticket.status}
             onChange={(e) => handleStatusChange(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded p-2 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0b1e3b]"
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0b1e3b]"
           >
             <option value="OPEN">Departed (Open)</option>
             <option value="IN_PROGRESS">In Transit</option>
@@ -341,7 +349,7 @@ export default function TicketDetails({ currentAgent, onOpenCustomerSimulator })
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex border-b-2 border-slate-200 space-x-6 text-xs font-bold uppercase tracking-wider">
+      <div className="flex border-b-2 border-slate-200 space-x-6 text-xs font-black uppercase tracking-wider">
         <button
           onClick={() => setActiveTab('conversation')}
           className={`pb-3 flex items-center gap-2 border-b-3 transition-colors ${
@@ -408,6 +416,9 @@ export default function TicketDetails({ currentAgent, onOpenCustomerSimulator })
                     }`}
                   >
                     <div className="flex items-center gap-2 text-xs text-slate-400 mb-1 px-1">
+                      {m.senderType === 'AGENT' && (
+                        <OfficerAvatar name={m.senderName} size="sm" />
+                      )}
                       <span className="font-bold text-slate-800">{m.senderName}</span>
                       <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-mono uppercase">
                         {m.senderType}
@@ -417,9 +428,9 @@ export default function TicketDetails({ currentAgent, onOpenCustomerSimulator })
                       </span>
                     </div>
                     <div
-                      className={`p-3.5 rounded-xl text-xs max-w-lg leading-relaxed shadow-2xs whitespace-pre-wrap ${
+                      className={`p-3.5 rounded-2xl text-xs max-w-lg leading-relaxed shadow-2xs whitespace-pre-wrap ${
                         m.senderType === 'AGENT'
-                          ? 'bg-[#0b1e3b] text-white rounded-tr-xs'
+                          ? 'bg-[#07172f] text-white rounded-tr-xs'
                           : 'bg-slate-100 text-slate-800 rounded-tl-xs border border-slate-200'
                       }`}
                     >
@@ -445,17 +456,17 @@ export default function TicketDetails({ currentAgent, onOpenCustomerSimulator })
                   value={replyContent}
                   onChange={(e) => setReplyContent(e.target.value)}
                   placeholder="Draft an official response to the passenger..."
-                  className="w-full text-xs bg-slate-50 border border-slate-300 rounded p-2.5 focus:outline-none focus:ring-2 focus:ring-[#0b1e3b] focus:bg-white resize-none"
+                  className="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-[#0b1e3b] focus:bg-white resize-none"
                 />
               </div>
 
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-slate-600 font-bold uppercase text-[11px]">Set Signal Status:</span>
+                  <span className="text-slate-600 font-black uppercase text-[11px]">Set Signal Status:</span>
                   <select
                     value={nextStatus}
                     onChange={(e) => setNextStatus(e.target.value)}
-                    className="bg-slate-100 border border-slate-300 rounded px-2.5 py-1 text-xs font-bold text-slate-800"
+                    className="bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800"
                   >
                     <option value="WAITING_ON_CUSTOMER">Signal Hold (Pause SLA)</option>
                     <option value="IN_PROGRESS">Keep In Transit</option>
@@ -466,7 +477,7 @@ export default function TicketDetails({ currentAgent, onOpenCustomerSimulator })
                 <button
                   type="submit"
                   disabled={!replyContent.trim() || submittingReply}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded bg-amber-500 hover:bg-amber-400 text-[#0b1e3b] text-xs font-black uppercase tracking-wider shadow-sm disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#07172f] text-xs font-black uppercase tracking-wider shadow-sm disabled:opacity-50 transition-colors"
                 >
                   <Send className="w-3.5 h-3.5" />
                   {submittingReply ? 'Transmitting...' : 'Dispatch Reply'}
