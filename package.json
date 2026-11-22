@@ -5,7 +5,7 @@
   "description": "Frontdesk - Arvo Systems Support Platform",
   "scripts": {
     "install:server": "cd server && npm install",
-    "install:client": "cd client && npm install",
+    "install:client": "cd client && npm install --include=dev",
     "install:all": "npm run install:server && npm run install:client",
     "prisma:generate": "cd server && npx prisma generate",
     "prisma:push": "cd server && npx prisma db push",
