@@ -6,7 +6,8 @@ import {
   List, 
   AlertCircle,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Ticket
 } from 'lucide-react';
 import { ticketApi } from '../services/api';
 import TicketTable from '../components/TicketTable';
@@ -19,7 +20,7 @@ export default function Tickets({ currentAgent, onOpenCreateModal }) {
   const [status, setStatus] = useState('ALL');
   const [priority, setPriority] = useState('ALL');
   const [assignedToId, setAssignedToId] = useState('ALL');
-  const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
+  const [viewMode, setViewMode] = useState('table');
   const [filterView, setFilterView] = useState('ALL');
 
   useEffect(() => {
@@ -70,27 +71,31 @@ export default function Tickets({ currentAgent, onOpenCreateModal }) {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Support Tickets
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0b1e3b]">
+            <Ticket className="w-4 h-4 text-amber-500" />
+            <span>Master Register</span>
+          </div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+            Central Ticket Directory
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Manage incoming customer requests, SLA compliance, and team assignments
+            Search, filter and inspect scheduled tickets, passenger issues, and transit delays
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={onOpenCreateModal}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-[#0b1e3b] text-xs font-extrabold shadow-sm transition-colors uppercase tracking-wider"
           >
-            <Plus className="w-4 h-4" />
-            Create Ticket
+            <Plus className="w-4 h-4 stroke-[3]" />
+            Issue New Ticket
           </button>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
         <div className="flex flex-col md:flex-row items-center gap-3">
           
           {/* Search box */}
@@ -98,10 +103,10 @@ export default function Tickets({ currentAgent, onOpenCreateModal }) {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Search by ticket #, subject, or customer name/email..."
+              placeholder="Search by Ticket PNR (INC-XXXX), passenger name, company or issue..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full text-xs pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+              className="w-full text-xs pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0b1e3b] focus:bg-white font-medium"
             />
           </form>
 
@@ -111,41 +116,41 @@ export default function Tickets({ currentAgent, onOpenCreateModal }) {
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="text-xs bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#0b1e3b]"
             >
-              <option value="ALL">All Priorities</option>
-              <option value="CRITICAL">Critical (2h)</option>
-              <option value="MEDIUM">Medium (4.5h)</option>
-              <option value="LOW">Low (1 Day)</option>
+              <option value="ALL">All Priority Classes</option>
+              <option value="CRITICAL">Superfast / Critical (2h)</option>
+              <option value="MEDIUM">Express / Medium (4.5h)</option>
+              <option value="LOW">Passenger / Low (1 Day)</option>
             </select>
 
             {/* Status */}
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="text-xs bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#0b1e3b]"
             >
-              <option value="ALL">All Statuses</option>
-              <option value="OPEN">Open</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="WAITING_ON_CUSTOMER">Waiting on Customer</option>
-              <option value="RESOLVED">Resolved</option>
-              <option value="CLOSED">Closed</option>
+              <option value="ALL">All Transit Statuses</option>
+              <option value="OPEN">Departed (Open)</option>
+              <option value="IN_PROGRESS">In Transit</option>
+              <option value="WAITING_ON_CUSTOMER">Signal Hold (Waiting)</option>
+              <option value="RESOLVED">Arrived (Resolved)</option>
+              <option value="CLOSED">Archived (Closed)</option>
             </select>
 
             {/* View Mode Toggle */}
             <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-slate-50 p-0.5">
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-white text-sky-600 shadow-2xs' : 'text-slate-500'}`}
-                title="Table View"
+                className={`p-1.5 rounded ${viewMode === 'table' ? 'bg-[#0b1e3b] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                title="Register Table View"
               >
                 <List className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('cards')}
-                className={`p-1.5 rounded ${viewMode === 'cards' ? 'bg-white text-sky-600 shadow-2xs' : 'text-slate-500'}`}
-                title="Cards Grid View"
+                className={`p-1.5 rounded ${viewMode === 'cards' ? 'bg-[#0b1e3b] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                title="Boarding Cards Grid"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -153,8 +158,8 @@ export default function Tickets({ currentAgent, onOpenCreateModal }) {
 
             <button
               onClick={loadTickets}
-              className="p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100"
-              title="Refresh"
+              className="p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors"
+              title="Refresh Register"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -177,11 +182,11 @@ export default function Tickets({ currentAgent, onOpenCreateModal }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {loading ? (
             <div className="col-span-full py-12 text-center text-slate-400">
-              <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-sky-600 border-t-transparent" />
+              <div className="inline-block animate-spin rounded-full h-7 w-7 border-3 border-amber-500 border-t-transparent" />
             </div>
           ) : tickets.length === 0 ? (
             <div className="col-span-full py-12 text-center text-slate-400 bg-white rounded-xl border border-slate-200">
-              No tickets found.
+              No tickets found in this register query.
             </div>
           ) : (
             tickets.map((ticket) => (

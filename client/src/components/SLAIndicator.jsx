@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, AlertTriangle, CheckCircle, PauseCircle } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle, PauseCircle, Compass } from 'lucide-react';
 
 export default function SLAIndicator({ ticket, compact = false }) {
   if (!ticket) return null;
@@ -10,53 +10,53 @@ export default function SLAIndicator({ ticket, compact = false }) {
 
   // Format remaining minutes into human hours/minutes
   const formatRemaining = (minutes) => {
-    if (minutes <= 0) return 'Breached';
+    if (minutes <= 0) return 'Delayed / Breached';
     const hrs = Math.floor(minutes / 60);
     const mins = Math.round(minutes % 60);
-    if (hrs === 0) return `${mins}m working time`;
-    return `${hrs}h ${mins}m working time`;
+    if (hrs === 0) return `${mins}m working window`;
+    return `${hrs}h ${mins}m working window`;
   };
 
-  // Helper for status badge
+  // Signal badges
   const getBadge = (slaData, label) => {
     if (!slaData) return null;
 
     if (slaData.status === 'MET') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-          {label}: Met
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+          <span className="w-2 h-2 rounded-full bg-emerald-600 shadow-[0_0_6px_#059669]" />
+          {label}: On Schedule (Met)
         </span>
       );
     }
 
     if (slaData.isBreached || slaData.status === 'BREACHED') {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 animate-pulse">
-          <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-          {label}: Breached
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 animate-pulse">
+          <span className="w-2 h-2 rounded-full bg-rose-600 shadow-[0_0_6px_#dc2626]" />
+          {label}: Delayed / Breached
         </span>
       );
     }
 
     if (isWaiting) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
-          <PauseCircle className="w-3.5 h-3.5 text-amber-600" />
-          {label}: Paused (Waiting)
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
+          <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_6px_#d97706]" />
+          {label}: Signal Hold (Paused)
         </span>
       );
     }
 
-    // Active
-    const isUrgent = slaData.remainingMinutes < 120; // less than 2 working hours
+    // Active Running
+    const isUrgent = slaData.remainingMinutes < 120;
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold border ${
         isUrgent 
-          ? 'bg-amber-50 text-amber-700 border-amber-200' 
-          : 'bg-blue-50 text-blue-700 border-blue-200'
+          ? 'bg-amber-50 text-amber-800 border-amber-300' 
+          : 'bg-blue-50 text-blue-800 border-blue-200'
       }`}>
-        <Clock className="w-3.5 h-3.5" />
+        <Clock className="w-3.5 h-3.5 text-blue-600" />
         {label}: {formatRemaining(slaData.remainingMinutes)}
       </span>
     );
@@ -65,33 +65,34 @@ export default function SLAIndicator({ ticket, compact = false }) {
   if (compact) {
     if (sla?.isOverallBreached || ticket.isFirstReplyBreached || ticket.isResolutionBreached) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
-          <AlertTriangle className="w-3 h-3 text-rose-600" />
-          SLA Breached
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-extrabold bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
+          <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
+          Signal Red (Late)
         </span>
       );
     }
 
     if (isWaiting) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-          <PauseCircle className="w-3 h-3 text-amber-600" />
-          SLA Paused
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+          <span className="w-2 h-2 rounded-full bg-amber-500" />
+          Signal Hold (Paused)
         </span>
       );
     }
 
     if (isResolved) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
-          Resolved
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <span className="w-2 h-2 rounded-full bg-emerald-600" />
+          Arrived (Resolved)
         </span>
       );
     }
 
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-        <Clock className="w-3 h-3 text-blue-600" />
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200 font-mono">
+        <Clock className="w-3 h-3 text-slate-600" />
         {formatRemaining(sla?.reply?.remainingMinutes || sla?.resolution?.remainingMinutes || 120)}
       </span>
     );
@@ -99,44 +100,48 @@ export default function SLAIndicator({ ticket, compact = false }) {
 
   // Full detailed indicator
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-      <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+    <div className="bg-[#0f2445] text-white border-2 border-amber-500/60 rounded-xl p-4 sm:p-5 shadow-lg space-y-3.5">
+      <div className="flex items-center justify-between border-b border-white/15 pb-2.5">
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-slate-500" />
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
-            SLA Working Hours Monitor
+          <Compass className="w-4 h-4 text-amber-400" />
+          <span className="text-xs font-extrabold uppercase tracking-widest text-amber-300">
+            SLA Station Schedule Monitor
           </span>
         </div>
-        <span className="text-xs text-slate-500 font-mono">
-          09:30 - 18:30 (Mon-Fri)
+        <span className="text-xs text-slate-300 font-mono bg-black/30 px-2.5 py-0.5 rounded border border-white/10">
+          Operating Window: 09:30 – 18:30 (Mon–Fri)
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {/* Reply SLA */}
-        <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm space-y-1.5">
-          <div className="text-xs font-medium text-slate-500">First Response SLA</div>
+        <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-lg border border-white/15 space-y-2">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+            First Response Schedule
+          </div>
           <div>{getBadge(sla?.reply, 'Reply')}</div>
-          <div className="text-[11px] text-slate-400">
+          <div className="text-xs text-amber-200/90 font-mono">
             Target Due: {new Date(ticket.firstReplyDueAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
 
         {/* Resolution SLA */}
-        <div className="bg-white p-3 rounded-lg border border-slate-100 shadow-sm space-y-1.5">
-          <div className="text-xs font-medium text-slate-500">Resolution SLA</div>
+        <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-lg border border-white/15 space-y-2">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
+            Final Resolution Schedule
+          </div>
           <div>{getBadge(sla?.resolution, 'Resolution')}</div>
-          <div className="text-[11px] text-slate-400">
+          <div className="text-xs text-amber-200/90 font-mono">
             Target Due: {new Date(ticket.resolutionDueAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
       </div>
 
       {isWaiting && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 flex items-center gap-2 text-xs text-amber-800">
-          <PauseCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+        <div className="bg-amber-500/20 border border-amber-400/40 rounded-lg p-3 flex items-center gap-2.5 text-xs text-amber-200">
+          <PauseCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
           <span>
-            <strong>Timer Paused:</strong> Ticket is waiting on customer reply. Elapsed time during this period is not counted against Arvo's SLA commitments.
+            <strong>Signal Hold Active:</strong> Ticket is waiting on passenger/customer reply. Time spent in this state is credited back to Arvo and does not count against SLA deadlines.
           </span>
         </div>
       )}

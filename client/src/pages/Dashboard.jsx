@@ -10,7 +10,9 @@ import {
   ArrowRight,
   TrendingUp,
   ShieldCheck,
-  Zap
+  Zap,
+  Ticket,
+  Compass
 } from 'lucide-react';
 import { ticketApi } from '../services/api';
 import TicketTable from '../components/TicketTable';
@@ -69,117 +71,124 @@ export default function Dashboard({ currentAgent }) {
   return (
     <div className="space-y-6">
       
-      {/* Top Welcome & KPI Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Top Station Header */}
+      <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Support Agent Dashboard
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#0b1e3b]">
+              Central Operations Board
+            </span>
+          </div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+            Railway Ticket Control & Dispatch
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Arvo Systems Frontdesk • Signed in as <strong className="text-slate-800">{currentAgent?.name}</strong> ({currentAgent?.role})
+            Logged in as Officer <strong className="text-slate-800">{currentAgent?.name}</strong> • 
+            Status: <span className="text-emerald-700 font-bold">On Duty ({currentAgent?.role})</span>
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={() => navigate('/tickets')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0b1e3b] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#132c54] shadow-sm transition-colors"
           >
-            <Inbox className="w-4 h-4 text-slate-500" />
-            View All Tickets
+            <Ticket className="w-4 h-4 text-amber-400" />
+            View Master Register
           </button>
         </div>
       </div>
 
-      {/* 5 KPI Stat Cards - Solves Meera's need: "They need to know which ones are already late, and which ones are waiting on the customer" */}
+      {/* 5 Railway Signal Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         
-        {/* Total Active Open */}
+        {/* Total Active Queue */}
         <div 
           onClick={() => setFilterView('ALL')}
-          className={`p-4 rounded-xl border cursor-pointer transition-all ${
+          className={`p-4 rounded-xl border-t-4 cursor-pointer transition-all ${
             filterView === 'ALL'
-              ? 'bg-sky-50 border-sky-300 ring-2 ring-sky-200 shadow-xs'
-              : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+              ? 'bg-blue-50/70 border-t-blue-700 border-x-blue-200 border-b-blue-200 shadow-sm ring-2 ring-blue-300'
+              : 'bg-white border-t-[#0b1e3b] border-slate-200 hover:shadow-md'
           }`}
         >
-          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
-            <span>Active Open</span>
-            <Inbox className="w-4 h-4 text-sky-600" />
+          <div className="flex items-center justify-between text-slate-600 text-xs font-bold uppercase tracking-wider">
+            <span>In-Transit Queue</span>
+            <Ticket className="w-4 h-4 text-[#0b1e3b]" />
           </div>
-          <div className="text-2xl font-bold text-slate-900 mt-2">
+          <div className="text-3xl font-black text-[#0b1e3b] mt-2">
             {metrics.totalOpen}
           </div>
-          <span className="text-[11px] text-slate-400 mt-1 block">In queue & in progress</span>
+          <span className="text-[11px] text-slate-500 font-medium mt-1 block">Active running tickets</span>
         </div>
 
-        {/* Breached / Late */}
+        {/* Signal Red / Late / Breached */}
         <div 
           onClick={() => setFilterView('LATE_OR_BREACHED')}
-          className={`p-4 rounded-xl border cursor-pointer transition-all ${
+          className={`p-4 rounded-xl border-t-4 cursor-pointer transition-all ${
             filterView === 'LATE_OR_BREACHED'
-              ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-200 shadow-xs'
-              : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+              ? 'bg-rose-50 border-t-rose-600 border-x-rose-200 border-b-rose-200 shadow-sm ring-2 ring-rose-300'
+              : 'bg-white border-t-rose-600 border-slate-200 hover:shadow-md'
           }`}
         >
-          <div className="flex items-center justify-between text-rose-700 text-xs font-medium">
-            <span className="font-bold">Late / Breached</span>
+          <div className="flex items-center justify-between text-rose-800 text-xs font-extrabold uppercase tracking-wider">
+            <span>Signal Red (Late)</span>
             <AlertTriangle className="w-4 h-4 text-rose-600" />
           </div>
-          <div className="text-2xl font-bold text-rose-600 mt-2">
+          <div className="text-3xl font-black text-rose-600 mt-2">
             {metrics.breached}
           </div>
-          <span className="text-[11px] text-rose-500 mt-1 block">Exceeded working-hr SLA</span>
+          <span className="text-[11px] text-rose-700 font-semibold mt-1 block">Exceeded SLA schedule</span>
         </div>
 
-        {/* Waiting on Customer */}
+        {/* Signal Hold / Waiting on Customer */}
         <div 
           onClick={() => setFilterView('WAITING_ON_CUSTOMER')}
-          className={`p-4 rounded-xl border cursor-pointer transition-all ${
+          className={`p-4 rounded-xl border-t-4 cursor-pointer transition-all ${
             filterView === 'WAITING_ON_CUSTOMER'
-              ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-200 shadow-xs'
-              : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+              ? 'bg-amber-50 border-t-amber-500 border-x-amber-200 border-b-amber-200 shadow-sm ring-2 ring-amber-300'
+              : 'bg-white border-t-amber-500 border-slate-200 hover:shadow-md'
           }`}
         >
-          <div className="flex items-center justify-between text-amber-800 text-xs font-medium">
-            <span>Waiting on Customer</span>
+          <div className="flex items-center justify-between text-amber-900 text-xs font-bold uppercase tracking-wider">
+            <span>Signal Hold (Wait)</span>
             <PauseCircle className="w-4 h-4 text-amber-600" />
           </div>
-          <div className="text-2xl font-bold text-amber-800 mt-2">
+          <div className="text-3xl font-black text-amber-800 mt-2">
             {metrics.waitingOnCustomer}
           </div>
-          <span className="text-[11px] text-amber-600 mt-1 block">SLA timer paused</span>
+          <span className="text-[11px] text-amber-700 font-medium mt-1 block">SLA timer paused</span>
         </div>
 
-        {/* Unassigned Pool */}
+        {/* Unassigned Platform Pool */}
         <div 
           onClick={() => setFilterView('UNASSIGNED')}
-          className={`p-4 rounded-xl border cursor-pointer transition-all ${
+          className={`p-4 rounded-xl border-t-4 cursor-pointer transition-all ${
             filterView === 'UNASSIGNED'
-              ? 'bg-indigo-50 border-indigo-300 ring-2 ring-indigo-200 shadow-xs'
-              : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+              ? 'bg-indigo-50 border-t-indigo-600 border-x-indigo-200 border-b-indigo-200 shadow-sm ring-2 ring-indigo-300'
+              : 'bg-white border-t-indigo-600 border-slate-200 hover:shadow-md'
           }`}
         >
-          <div className="flex items-center justify-between text-indigo-700 text-xs font-medium">
+          <div className="flex items-center justify-between text-indigo-900 text-xs font-bold uppercase tracking-wider">
             <span>Unassigned Pool</span>
             <UserCheck className="w-4 h-4 text-indigo-600" />
           </div>
-          <div className="text-2xl font-bold text-indigo-700 mt-2">
+          <div className="text-3xl font-black text-indigo-700 mt-2">
             {metrics.unassigned}
           </div>
-          <span className="text-[11px] text-indigo-500 mt-1 block">Ready for agents to take</span>
+          <span className="text-[11px] text-indigo-600 font-medium mt-1 block">Ready for officer claim</span>
         </div>
 
-        {/* Resolved Today */}
-        <div className="p-4 rounded-xl border bg-white border-slate-200">
-          <div className="flex items-center justify-between text-emerald-700 text-xs font-medium">
-            <span>Resolved Today</span>
+        {/* Arrived / Resolved Today */}
+        <div className="p-4 rounded-xl border-t-4 border-t-emerald-600 bg-white border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between text-emerald-900 text-xs font-bold uppercase tracking-wider">
+            <span>Cleared Today</span>
             <CheckCircle className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-2xl font-bold text-emerald-700 mt-2">
+          <div className="text-3xl font-black text-emerald-700 mt-2">
             {metrics.resolvedToday}
           </div>
-          <span className="text-[11px] text-emerald-600 mt-1 block">Closed within target SLA</span>
+          <span className="text-[11px] text-emerald-600 font-medium mt-1 block">Destination reached</span>
         </div>
 
       </div>
@@ -187,11 +196,16 @@ export default function Dashboard({ currentAgent }) {
       {/* Main Ticket Queue Table */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-800">
-            Active Ticket Queue
-          </h2>
-          <span className="text-xs text-slate-500">
-            Showing {tickets.length} tickets • Real-time working hours sync
+          <div className="flex items-center gap-2">
+            <span className="font-extrabold text-slate-800 uppercase tracking-wider text-xs">
+              Live Station Platform Queue
+            </span>
+            <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-full font-mono">
+              {tickets.length} SCHEDULED
+            </span>
+          </div>
+          <span className="text-xs text-slate-500 font-mono">
+            Synced with Arvo Central Server
           </span>
         </div>
 
