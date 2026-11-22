@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: frontdesk-arvo
+    env: node
+    plan: free
+    buildCommand: npm run install:all && cd server && npx prisma generate && npx prisma db push && node prisma/seed.js && cd .. && npm run build
+    startCommand: cd server && cross-env NODE_ENV=production node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        value: file:./dev.db

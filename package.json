@@ -1,0 +1,28 @@
+{
+  "name": "frontdesk-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontdesk - Arvo Systems Support Platform",
+  "scripts": {
+    "install:server": "cd server && npm install",
+    "install:client": "cd client && npm install",
+    "install:all": "npm run install:server && npm run install:client",
+    "prisma:generate": "cd server && npx prisma generate",
+    "prisma:push": "cd server && npx prisma db push",
+    "seed": "cd server && node prisma/seed.js",
+    "setup": "npm run prisma:generate && npm run prisma:push && npm run seed",
+    "build:client": "cd client && npm run build",
+    "build": "npm run build:client",
+    "start": "cd server && node server.js",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev"
+  },
+  "keywords": [
+    "frontdesk",
+    "arvo-systems",
+    "sla-engine",
+    "support-desk"
+  ],
+  "author": "Full Stack Developer",
+  "license": "MIT"
+}
