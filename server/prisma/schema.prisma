@@ -1,0 +1,123 @@
+// Frontdesk - Arvo Systems Support Desk
+// Schema definition supporting concurrency locks, strict internal note segregation, and immutable audit logs.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  role          String         @default("SUPPORT_AGENT") // SUPPORT_LEAD, SUPPORT_AGENT
+  avatar        String?
+  assignedTickets Ticket[]     @relation("AssignedAgent")
+  internalNotes InternalNote[]
+  messages      TicketMessage[]
+  createdAt     DateTime       @default(now())
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  company   String?
+  tickets   Ticket[]
+  createdAt DateTime @default(now())
+}
+
+model Ticket {
+  id                        String          @id @default(cuid())
+  ticketNumber              String          @unique // e.g. INC-0342
+  title                     String
+  description               String
+  priority                  String          @default("MEDIUM") // CRITICAL, MEDIUM, LOW
+  status                    String          @default("OPEN")   // OPEN, IN_PROGRESS, WAITING_ON_CUSTOMER, RESOLVED, CLOSED
+  
+  customerId                String
+  customer                  Customer        @relation(fields: [customerId], references: [id])
+  
+  assignedToId              String?
+  assignedTo                Agent?          @relation("AssignedAgent", fields: [assignedToId], references: [id])
+  
+  // Concurrency & Collision Protection (INC-0291)
+  version                   Int             @default(1)
+
+  // Timestamps
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+  firstRepliedAt            DateTime?
+  resolvedAt                DateTime?
+  closedAt                  DateTime?
+  
+  // Working Hours & SLA Pause Tracking
+  lastStatusChangeAt        DateTime        @default(now())
+  waitingCustomerStartedAt  DateTime?
+  totalPausedWorkingMinutes Int             @default(0)
+  
+  // Computed SLA Due Dates
+  firstReplyDueAt           DateTime
+  resolutionDueAt           DateTime
+  isFirstReplyBreached      Boolean         @default(false)
+  isResolutionBreached      Boolean         @default(false)
+
+  // Relations
+  messages                  TicketMessage[]
+  internalNotes             InternalNote[]  // Strictly isolated - never exposed to customer API
+  auditLogs                 AuditLog[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([assignedToId])
+}
+
+// Public / Customer-Facing Conversation
+model TicketMessage {
+  id         String   @id @default(cuid())
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderType String   // "CUSTOMER" or "AGENT"
+  senderId   String?
+  senderName String
+  agent      Agent?   @relation(fields: [senderId], references: [id])
+  content    String
+  createdAt  DateTime @default(now())
+
+  @@index([ticketId])
+}
+
+// Strictly Internal Notes (INC-0304: Leaked notes prevention)
+// Never queried by or exposed to customer-facing views or endpoints.
+model InternalNote {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
+// Immutable Audit Log (INC-0318: Dispute prevention & historical truth)
+// No update or delete operations are permitted on this model.
+model AuditLog {
+  id         String   @id @default(cuid())
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  actorType  String   // "AGENT", "CUSTOMER", "SYSTEM"
+  actorId    String?
+  actorName  String
+  action     String   // TICKET_CREATED, TICKET_CLAIMED, STATUS_CHANGED, PRIORITY_CHANGED, CUSTOMER_REPLY, AGENT_REPLY, INTERNAL_NOTE_ADDED, SLA_PAUSED, SLA_RESUMED, TICKET_REOPENED, AUTO_CLOSED
+  details    String   // Serialized JSON with before/after state
+  createdAt  DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([createdAt])
+}
